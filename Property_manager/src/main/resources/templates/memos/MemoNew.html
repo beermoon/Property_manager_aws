@@ -1,0 +1,22 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>메모 추가</title>
+</head>
+<body>
+
+<h2>메모 추가</h2>
+
+<form th:action="@{|/properties/${propertyId}/memos|}" method="post">
+    <textarea name="content" rows="5" cols="40"></textarea>
+    <br><br>
+    <button type="submit">저장</button>
+</form>
+
+<p>
+    <a th:href="@{|/properties/${propertyId}|}">← 상세로 돌아가기</a>
+</p>
+
+</body>
+</html>

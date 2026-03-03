@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>매물 지도</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/css/map.css"/>
+</head>
+<body>
+<div class="wrap">
+
+    <div class="topbar">
+        <h1>매물 지도</h1>
+        <a href="/properties">📄 매물 목록</a>
+    </div>
+
+    <div class="panel">
+        <div class="panel-head">
+            <div>
+                <p class="title">필터</p>
+                <p class="sub">필터를 설정하고 [적용]을 누르면 매물이 표시됩니다.</p>
+            </div>
+            <div class="sub">단위: 금액은 “만원”</div>
+        </div>
+
+        <div class="group">
+
+            <h3>기본 조건</h3>
+            <div class="field" style="margin-bottom:12px;">
+                <label>🔍 키워드</label>
+                <input id="keyword" type="text" placeholder="제목, 주소, 건물명 검색" />
+            </div>
+            <div class="grid two">
+                <div class="field">
+                    <label>구역</label>
+                    <input id="region" type="text" placeholder="예: 해운대" />
+                </div>
+
+                <div class="field">
+                    <label>거래유형</label>
+                    <select id="dealType">
+                        <option value="">전체</option>
+                        <option value="MONTHLY">월세</option>
+                        <option value="JEONSE">전세</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="group">
+            <h3>가격/스펙</h3>
+            <div class="grid four">
+                <div class="field">
+                    <label>보증금(만)</label>
+                    <div class="range">
+                        <input id="minDeposit" type="number" placeholder="최소" />
+                        <div class="sep">~</div>
+                        <input id="maxDeposit" type="number" placeholder="최대" />
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label>월세(만)</label>
+                    <div class="range">
+                        <input id="minMonthlyRent" type="number" placeholder="최소" />
+                        <div class="sep">~</div>
+                        <input id="maxMonthlyRent" type="number" placeholder="최대" />
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label>준공연도</label>
+                    <div class="range">
+                        <input id="minBuiltYear" type="number" placeholder="최소" />
+                        <div class="sep">~</div>
+                        <input id="maxBuiltYear" type="number" placeholder="최대" />
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label>평수</label>
+                    <div class="range">
+                        <input id="minArea" type="number" step="0.1" placeholder="최소" />
+                        <div class="sep">~</div>
+                        <input id="maxArea" type="number" step="0.1" placeholder="최대" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="group">
+            <h3>옵션</h3>
+            <div class="grid five">
+                <div class="field">
+                    <label>룸 개수</label>
+                    <select id="roomCount">
+                        <option value="">전체</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>엘리베이터</label>
+                    <select id="hasElevator">
+                        <option value="">전체</option>
+                        <option value="true">있음</option>
+                        <option value="false">없음</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>주차</label>
+                    <select id="hasParking">
+                        <option value="">전체</option>
+                        <option value="true">가능</option>
+                        <option value="false">불가</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>반려동물</label>
+                    <select id="petAllowed">
+                        <option value="">전체</option>
+                        <option value="true">가능</option>
+                        <option value="false">불가</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>LH</label>
+                    <select id="lhAvailable">
+                        <option value="">전체</option>
+                        <option value="true">LH</option>
+                        <option value="false">일반</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="actions">
+            <button id="btnReset" class="btn-ghost" type="button">초기화</button>
+            <button id="btnSearch" class="btn-primary" type="button">적용</button>
+        </div>
+
+        <div class="hint" id="hint"></div>
+    </div>
+
+    <div id="map"></div>
+
+</div>
+
+<script type="text/javascript"
+        src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=m09cd547kq"></script>
+
+<script th:inline="javascript">
+    window.__FOCUS_ID__ = /*[[${focusId}]]*/ null;
+</script>
+<script src="/js/map.js" defer></script>
+
+</body>
+</html>
+

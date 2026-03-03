@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>매물 상세</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<div class="wrap">
+
+    <div class="topbar">
+        <div>
+            <h1 th:text="${property.title}">매물 상세</h1>
+            <div class="muted" th:text="${property.lotAddress}">주소</div>
+        </div>
+        <div class="row-actions">
+            <a class="btn" href="/properties">← 목록</a>
+            <a class="btn" th:href="@{|/?focusId=${property.id}|}">🗺️ 지도에서 보기</a>
+            <a class="btn primary" th:href="@{|/properties/${property.id}/edit|}">수정</a>
+            <form th:action="@{|/properties/${property.id}/delete|}" method="post" style="margin:0"
+                  onsubmit="return confirm('정말 삭제할까요?');">
+                <button class="btn danger" type="submit">삭제</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card" th:if="${property.photos != null}">
+        <h2>사진</h2>
+        <div class="photos" th:if="${!#lists.isEmpty(property.photos)}">
+            <img th:each="ph : ${property.photos}" th:src="${ph.url}" alt="photo">
+        </div>
+        <div class="muted" th:if="${#lists.isEmpty(property.photos)}">등록된 사진이 없습니다.</div>
+    </div>
+
+    <div class="card">
+        <h2>기본 정보</h2>
+        <div class="grid">
+            <div class="item"><div class="k">구역</div><div class="v" th:text="${property.region} ?: '-'">-</div></div>
+            <div class="item"><div class="k">건물명</div><div class="v" th:text="${property.buildingName} ?: '-'">-</div></div>
+            <div class="item"><div class="k">지번 주소</div><div class="v" th:text="${property.lotAddress} ?: '-'">-</div></div>
+            <div class="item"><div class="k">호수</div><div class="v" th:text="${property.unitNumber} ?: '-'">-</div></div>
+            <div class="item"><div class="k">준공연도</div><div class="v" th:text="${property.builtYear} ?: '-'">-</div></div>
+            <div class="item"><div class="k">평수</div><div class="v" th:text="${property.area} ?: '-'">-</div></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>거래 정보</h2>
+        <div class="grid">
+            <div class="item">
+                <div class="k">거래유형</div>
+                <div class="v"><span class="badge" th:text="${property.dealType.label}">월세</span></div>
+            </div>
+            <div class="item">
+                <div class="k">상태</div>
+                <div class="v">
+          <span class="badge"
+                th:classappend="${property.status.name() == 'VACANT'} ? ' green' : ' gray'"
+                th:text="${property.status.label}">공실</span>
+                </div>
+            </div>
+
+            <div class="item">
+                <div class="k">만기</div>
+                <div class="v" th:text="${property.expiry} ?: '-'">-</div>
+            </div>
+
+            <div class="item" th:if="${property.dealType.name() == 'MONTHLY'}">
+                <div class="k">보증금</div><div class="v" th:text="${property.depositMan} + ' 만원'">-</div>
+            </div>
+            <div class="item" th:if="${property.dealType.name() == 'MONTHLY'}">
+                <div class="k">월세</div><div class="v" th:text="${property.monthlyRentMan} + ' 만원'">-</div>
+            </div>
+
+            <div class="item" th:if="${property.dealType.name() == 'JEONSE'}">
+                <div class="k">전세</div><div class="v" th:text="${property.depositMan} + ' 만원'">-</div>
+            </div>
+
+            <div class="item">
+                <div class="k">관리비</div><div class="v" th:text="${property.managementFeeMan} + ' 만원'">-</div>
+            </div>
+        </div>
+        <div class="muted" style="margin-top:8px;">※ 금액은 “만원 단위” 기준으로 표시됩니다.</div>
+    </div>
+
+    <div class="card">
+        <h2>옵션</h2>
+        <div class="grid">
+            <div class="item"><div class="k">엘리베이터</div><div class="v" th:text="${property.elevatorLabel}">-</div></div>
+            <div class="item"><div class="k">주차</div><div class="v" th:text="${property.parkingLabel}">-</div></div>
+            <div class="item"><div class="k">룸 개수</div><div class="v" th:text="${property.roomCount} ?: '-'">-</div></div>
+            <div class="item"><div class="k">반려동물</div><div class="v" th:text="${property.petLabel}">-</div></div>
+            <div class="item"><div class="k">LH 여부</div><div class="v" th:text="${property.lhLabel}">-</div></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>연락 / 비밀번호</h2>
+        <div class="grid">
+            <div class="item"><div class="k">세입자 연락처</div><div class="v" th:text="${property.tenantPhone} ?: '-'">-</div></div>
+            <div class="item"><div class="k">건물주 연락처</div><div class="v" th:text="${property.ownerPhone} ?: '-'">-</div></div>
+            <div class="item"><div class="k">공동현관 비번</div><div class="v" th:text="${property.entrancePassword} ?: '-'">-</div></div>
+            <div class="item"><div class="k">집 비번</div><div class="v" th:text="${property.housePassword} ?: '-'">-</div></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-head">
+            <h2 class="card-title">메모</h2>
+            <span class="card-sub" th:text="${#lists.size(memos)} + '개'">0개</span>
+        </div>
+
+        <div class="memo-empty" th:if="${#lists.isEmpty(memos)}">
+            아직 메모가 없습니다.
+        </div>
+
+        <ul class="memo-list" th:if="${!#lists.isEmpty(memos)}">
+            <li class="memo-item" th:each="m : ${memos}">
+                <div>
+                    <div class="memo-text" th:text="${m.content}">메모 내용</div>
+                    <div class="memo-date" th:if="${m.createdAt != null}"
+                         th:text="${#temporals.format(m.createdAt, 'yyyy-MM-dd HH:mm')}">2026-02-26 12:34</div>
+                </div>
+
+                <form th:action="@{|/properties/${property.id}/memos/${m.id}/delete|}" method="post">
+                    <button class="btn-mini btn-danger" type="submit"
+                            onclick="return confirm('이 메모를 삭제할까요?')">삭제</button>
+                </form>
+            </li>
+        </ul>
+
+        <form class="memo-form" th:action="@{|/properties/${property.id}/memos|}" method="post">
+            <input class="memo-input" name="content" placeholder="메모를 입력하세요" required />
+            <button class="btn primary" type="submit">추가</button>
+        </form>
+    </div>
+
+</div>
+</body>
+</html>
