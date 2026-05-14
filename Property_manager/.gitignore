@@ -38,3 +38,4 @@ out/
 
 # local config
 src/main/resources/application-local.yml
+src/main/resources/application-prod.yml
