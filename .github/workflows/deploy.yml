@@ -48,18 +48,23 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            # 기존 앱 종료
-            pkill -f '.jar' || true
-            sleep 3
+            # 기존 앱 종료 (jar 프로세스만 종료)
+            PID=$(pgrep -f 'Property_manager') || true
+            if [ -n "$PID" ]; then
+              kill $PID || true
+              sleep 3
+            fi
 
             # 새 jar 실행
-            nohup java -jar /home/ubuntu/app/Property_manager-0.0.1-SNAPSHOT.jar \
+            nohup java \
+              -DDB_USERNAME=${{ secrets.DB_USERNAME }} \
+              -DDB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+              -DNAVER_MAPS_JS_KEY_ID=${{ secrets.NAVER_MAPS_JS_KEY_ID }} \
+              -DNAVER_GEOCODING_KEY_ID=${{ secrets.NAVER_GEOCODING_KEY_ID }} \
+              -DNAVER_GEOCODING_KEY=${{ secrets.NAVER_GEOCODING_KEY }} \
+              -jar /home/ubuntu/app/Property_manager-0.0.1-SNAPSHOT.jar \
               --spring.profiles.active=prod \
-              --DB_USERNAME=${{ secrets.DB_USERNAME }} \
-              --DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
-              --NAVER_MAPS_JS_KEY_ID=${{ secrets.NAVER_MAPS_JS_KEY_ID }} \
-              --NAVER_GEOCODING_KEY_ID=${{ secrets.NAVER_GEOCODING_KEY_ID }} \
-              --NAVER_GEOCODING_KEY=${{ secrets.NAVER_GEOCODING_KEY }} \
               > /home/ubuntu/app.log 2>&1 &
 
+            disown
             echo "배포 완료!"
