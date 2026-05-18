@@ -48,11 +48,18 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            # 기존 앱 종료
             pkill -f '.jar' || true
-            export SPRING_PROFILES_ACTIVE=prod
-            export DB_USERNAME='${{ secrets.DB_USERNAME }}'
-            export DB_PASSWORD='${{ secrets.DB_PASSWORD }}'
-            export NAVER_MAPS_JS_KEY_ID='${{ secrets.NAVER_MAPS_JS_KEY_ID }}'
-            export NAVER_GEOCODING_KEY_ID='${{ secrets.NAVER_GEOCODING_KEY_ID }}'
-            export NAVER_GEOCODING_KEY='${{ secrets.NAVER_GEOCODING_KEY }}'
-            nohup java -jar /home/ubuntu/app/build/libs/*.jar > app.log 2>&1 &
+            sleep 3
+
+            # 새 jar 실행
+            nohup java -jar /home/ubuntu/app/Property_manager-0.0.1-SNAPSHOT.jar \
+              --spring.profiles.active=prod \
+              --DB_USERNAME=${{ secrets.DB_USERNAME }} \
+              --DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+              --NAVER_MAPS_JS_KEY_ID=${{ secrets.NAVER_MAPS_JS_KEY_ID }} \
+              --NAVER_GEOCODING_KEY_ID=${{ secrets.NAVER_GEOCODING_KEY_ID }} \
+              --NAVER_GEOCODING_KEY=${{ secrets.NAVER_GEOCODING_KEY }} \
+              > /home/ubuntu/app.log 2>&1 &
+
+            echo "배포 완료!"
