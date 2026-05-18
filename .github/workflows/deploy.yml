@@ -42,14 +42,12 @@ jobs:
           strip_components: 3
 
       - name: 서버 재시작
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@v1.0.3  # master → v1.0.3 으로 변경
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          request_pty: true
           script: |
-            # '.jar' 전체가 아닌 정확한 앱 이름으로만 종료
             PID=$(pgrep -f 'Property_manager-0.0.1-SNAPSHOT.jar') || true
             if [ -n "$PID" ]; then
               kill -15 $PID
