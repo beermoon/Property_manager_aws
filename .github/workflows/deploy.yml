@@ -28,6 +28,9 @@ jobs:
       - name: 프로젝트 빌드
         run: ./gradlew build -x test
 
+      - name: jar 파일 확인
+        run: find . -name "*.jar" -type f
+
       - name: EC2에 jar 업로드
         uses: appleboy/scp-action@master
         with:
