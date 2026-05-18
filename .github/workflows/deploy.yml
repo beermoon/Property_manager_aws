@@ -47,6 +47,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
+          script_stop: false
           script: |
             PID=$(pgrep -f 'Property_manager-0.0.1-SNAPSHOT.jar') || true
             if [ -n "$PID" ]; then
