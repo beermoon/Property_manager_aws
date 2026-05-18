@@ -47,6 +47,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
+          request_pty: true
           script: |
             # 기존 앱 종료 (jar 프로세스만 종료)
             PID=$(pgrep -f 'Property_manager') || true
