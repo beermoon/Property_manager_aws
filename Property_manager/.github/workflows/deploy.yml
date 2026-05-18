@@ -31,8 +31,9 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "build/libs/*.jar"
+          source: "build/libs/*-SNAPSHOT.jar"
           target: "/home/ubuntu/app"
+          strip_components: 2
 
       - name: 서버 재시작
         uses: appleboy/ssh-action@master

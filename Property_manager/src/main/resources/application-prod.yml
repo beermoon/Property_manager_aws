@@ -2,8 +2,8 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/propertydb
     driver-class-name: org.postgresql.Driver
-    username: property_user
-    password: 3772
+    username: ${DB_USERNAME:property_user}
+    password: ${DB_PASSWORD}
 
   jpa:
     hibernate:
@@ -15,10 +15,10 @@ spring:
 
 naver:
   maps:
-    js-key-id: 2ihhwpahs3
+    js-key-id: ${NAVER_MAPS_JS_KEY_ID}
   geocoding:
-    key-id: 2ihhwpahs3
-    key: c7FRp9eB5zXLlO7yYP9zNKPXorjqOf9L08DSwHZ4
+    key-id: ${NAVER_GEOCODING_KEY_ID}
+    key: ${NAVER_GEOCODING_KEY}
 
 app:
   upload-dir: ./data/uploads
