@@ -8,6 +8,9 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./Property_manager  # ← 이거 추가!
 
     steps:
       - name: 코드 가져오기
