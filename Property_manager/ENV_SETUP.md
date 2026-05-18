@@ -96,7 +96,7 @@ Could not resolve placeholder 'NAVER_GEOCODING_KEY' in value "${NAVER_GEOCODING_
 ### 3-3. gradlew로 실행할 때
 
 터미널에서 `./gradlew bootRun`으로 돌리시려면 환경변수를 셸 세션에 export 해야 해요.
-
+// test
 ```bash
 export NAVER_MAPS_JS_KEY_ID='실제값'
 export NAVER_GEOCODING_KEY_ID='실제값'
