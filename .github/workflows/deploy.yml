@@ -55,6 +55,12 @@ jobs:
               sleep 3
             fi
 
+            export DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
+            export DB_USERNAME="${{ secrets.DB_USERNAME }}"
+            export NAVER_MAPS_JS_KEY_ID="${{ secrets.NAVER_MAPS_JS_KEY_ID }}"
+            export NAVER_GEOCODING_KEY_ID="${{ secrets.NAVER_GEOCODING_KEY_ID }}"
+            export NAVER_GEOCODING_KEY="${{ secrets.NAVER_GEOCODING_KEY }}"
+
             nohup java \
               -jar /home/ubuntu/app/Property_manager-0.0.1-SNAPSHOT.jar \
               --spring.profiles.active=prod \
