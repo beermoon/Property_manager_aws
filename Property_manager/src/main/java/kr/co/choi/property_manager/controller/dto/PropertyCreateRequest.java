@@ -1,9 +1,47 @@
 package kr.co.choi.property_manager.controller.dto;
 
 import kr.co.choi.property_manager.domain.DealType;
+import kr.co.choi.property_manager.domain.Property;
 import kr.co.choi.property_manager.domain.PropertyStatus;
 
 public class PropertyCreateRequest {
+
+    /**
+     * 기존 Property 엔티티의 값들로 폼 DTO를 채운다(수정 폼 진입 시).
+     * 금액은 DB에 "원" 단위로 저장돼 있으므로, 화면 표시용 "만원" 단위로 변환한다.
+     */
+    public static PropertyCreateRequest from(Property p) {
+        PropertyCreateRequest form = new PropertyCreateRequest();
+        form.setTitle(p.getTitle());
+        form.setRegion(p.getRegion());
+        form.setBuildingName(p.getBuildingName());
+        form.setAddress(p.getAddress());
+        form.setLotAddress(p.getLotAddress());
+        form.setUnitNumber(p.getUnitNumber());
+        form.setBuiltYear(p.getBuiltYear());
+        form.setArea(p.getArea());
+
+        form.setDealType(p.getDealType());
+        form.setDeposit(p.getDepositMan());           // 만원 단위로
+        form.setMonthlyRent(p.getMonthlyRentMan());
+        form.setManagementFee(p.getManagementFeeMan());
+        form.setStatus(p.getStatus());
+        form.setExpiry(p.getExpiry());
+
+        form.setHasElevator(p.getHasElevator());
+        form.setHasParking(p.getHasParking());
+        form.setRoomCount(p.getRoomCount());
+        form.setPetAllowed(p.getPetAllowed());
+        form.setLhAvailable(p.getLhAvailable());
+
+        form.setEntrancePassword(p.getEntrancePassword());
+        form.setHousePassword(p.getHousePassword());
+        form.setTenantPhone(p.getTenantPhone());
+        form.setOwnerPhone(p.getOwnerPhone());
+
+        return form;
+    }
+
     public String title;
     public String region;
     public String buildingName;

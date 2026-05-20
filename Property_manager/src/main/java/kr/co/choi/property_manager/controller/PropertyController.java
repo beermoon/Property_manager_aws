@@ -1,13 +1,11 @@
 package kr.co.choi.property_manager.controller;
 
 import kr.co.choi.property_manager.controller.dto.PropertyCreateRequest;
-import kr.co.choi.property_manager.domain.*;
-import kr.co.choi.property_manager.infra.NaverGeocodingClient;
-import kr.co.choi.property_manager.repository.MemoRepository;
-import kr.co.choi.property_manager.repository.PropertyPhotoRepository;
-import kr.co.choi.property_manager.repository.PropertyRepository;
+import kr.co.choi.property_manager.domain.DealType;
+import kr.co.choi.property_manager.domain.Property;
+import kr.co.choi.property_manager.domain.PropertyStatus;
 import kr.co.choi.property_manager.repository.specs.PropertySpecs;
-import kr.co.choi.property_manager.service.FileStorageService;
+import kr.co.choi.property_manager.service.PropertyService;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -16,36 +14,29 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
+/**
+ * 매물 화면(MVC)을 담당하는 컨트롤러.
+ *
+ * <p>비즈니스 로직은 모두 {@link PropertyService}에 위임하고, 이 클래스는
+ * HTTP 요청을 받아 Service를 호출하고 View로 분기하는 얇은 layer로만 존재한다.
+ */
 @Controller
 @RequestMapping("/properties")
 public class PropertyController {
 
-    private final PropertyRepository propertyRepository;
-    private final MemoRepository memoRepository;
-    private final NaverGeocodingClient naverGeocodingClient;
-    private final FileStorageService fileStorageService;
-    private final PropertyPhotoRepository propertyPhotoRepository;
+    private final PropertyService propertyService;
 
-    public PropertyController(PropertyRepository propertyRepository,
-                                MemoRepository memoRepository,
-                            NaverGeocodingClient naverGeocodingClient,
-                            FileStorageService fileStorageService,
-                              PropertyPhotoRepository propertyPhotoRepository) {
-        this.propertyRepository = propertyRepository;
-        this.memoRepository = memoRepository;
-        this.naverGeocodingClient = naverGeocodingClient;
-        this.fileStorageService = fileStorageService;
-        this.propertyPhotoRepository = propertyPhotoRepository;
+    public PropertyController(PropertyService propertyService) {
+        this.propertyService = propertyService;
     }
 
-    // 1) 리스트
+    // 1) 목록
     @GetMapping
     public String list(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String region,
             @RequestParam(required = false) DealType dealType,
             @RequestParam(required = false) PropertyStatus status,
-
 
             @RequestParam(required = false) Long minDeposit,
             @RequestParam(required = false) Long maxDeposit,
@@ -67,7 +58,7 @@ public class PropertyController {
             @RequestParam(required = false) String expiry,
             Model model
     ) {
-        var spec = Specification.where(PropertySpecs.keywordContains(keyword))
+        Specification<Property> spec = Specification.where(PropertySpecs.keywordContains(keyword))
                 .and(PropertySpecs.regionEq(region))
                 .and(PropertySpecs.dealTypeEq(dealType))
                 .and(PropertySpecs.statusEq(status))
@@ -82,9 +73,9 @@ public class PropertyController {
                 .and(PropertySpecs.lhAvailable(lhAvailable))
                 .and(PropertySpecs.expiryContains(expiry));
 
-        model.addAttribute("properties", propertyRepository.findAll(spec));
+        model.addAttribute("properties", propertyService.findAll(spec));
 
-        // 폼 값 유지용(선택)
+        // 폼 값 유지용
         model.addAttribute("keyword", keyword);
         model.addAttribute("region", region);
         model.addAttribute("dealType", dealType);
@@ -115,263 +106,105 @@ public class PropertyController {
         return "properties/new";
     }
 
+    // 3) 등록 처리
     @PostMapping
     public String create(@ModelAttribute("form") PropertyCreateRequest request,
-                         @RequestParam(value = "photos", required = false) java.util.List<MultipartFile> photos,
+                         @RequestParam(value = "photos", required = false) List<MultipartFile> photos,
                          Model model) {
-
-
-
         try {
-
-            if (request.getLotAddress() == null || request.getLotAddress().isBlank()) {
-                throw new IllegalArgumentException("지번 주소는 필수입니다.");
-            }
-
-            // 1) 지오코딩 (지번주소 기준)
-            var point = naverGeocodingClient.geocodeOrThrow(request.getLotAddress());
-
-            // 2) 엔티티 생성 + 값 세팅
-            Property property = new Property();
-            property.updateAll(request);
-
-            // 3) 좌표 저장
-            property.updateLocation(point.lat(), point.lng());
-
-            // 4) 저장
-            propertyRepository.save(property);
-
-            // 5) 사진 저장
-            if (photos != null) {
-                for (MultipartFile file : photos) {
-                    if (file == null || file.isEmpty()) continue;
-
-                    var stored = fileStorageService.store(file);
-                    var photo = new PropertyPhoto(
-                            property,
-                            stored.originalName(),
-                            stored.storedName(),
-                            stored.url()
-                    );
-
-                    property.addPhoto(photo);
-                    propertyPhotoRepository.save(photo);
-                }
-            }
-
-            return "redirect:/properties/" + property.getId();
-
+            Long id = propertyService.create(request, photos);
+            return "redirect:/properties/" + id;
         } catch (Exception e) {
-            e.printStackTrace();
-
-            model.addAttribute("error", e.getMessage());
-
-            // ✅ 입력값 유지 핵심
-            model.addAttribute("form", request);
-
-            // ✅ select 옵션 유지 (new.html에서 쓰는 것들 전부)
-            model.addAttribute("dealTypes", DealType.values());
-            model.addAttribute("statuses", PropertyStatus.values()); // 쓰고 있으면 꼭
-
-            return "properties/new"; // ✅ redirect 하지 말고 그대로 렌더링
+            return renderFormWithError("properties/new", e, request, model);
         }
     }
 
-    // 4) 상세 (+ 메모 목록)
+    // 4) 상세 (메모 목록 포함)
     @GetMapping("/{id}")
     public String detail(@PathVariable Long id, Model model) {
-        Property property = propertyRepository.findById(id)
-                .orElseThrow(()-> new IllegalArgumentException("Property not found : " + id));
-
-        model.addAttribute("property",property);
-        model.addAttribute("memos", memoRepository.findByPropertyIdOrderByCreatedAtDesc(id));
+        Property property = propertyService.findById(id);
+        model.addAttribute("property", property);
+        model.addAttribute("memos", propertyService.findMemosByProperty(id));
         return "properties/detail";
     }
 
-    // 메모 추가
+    // 5) 메모 추가
     @PostMapping("/{id}/memos")
-    public String addMemo(@PathVariable Long id,
-                          @RequestParam String content) {
-
-        Property property = propertyRepository.findById(id)
-                .orElseThrow(()-> new IllegalArgumentException("Property not found : " + id));
-
-        Memo memo = new Memo(content);
-        // 연관관계 설정 (Property의 addMemo 사용)
-        property.addMemo(memo);      // 연관관계 세팅
-        memoRepository.save(memo);   // ✅ 메모를 직접 저장 (확실)
-
+    public String addMemo(@PathVariable Long id, @RequestParam String content) {
+        propertyService.addMemo(id, content);
         return "redirect:/properties/" + id;
     }
 
-    // 메모 삭제
+    // 6) 메모 삭제
     @PostMapping("/{propertyId}/memos/{memoId}/delete")
-    public String deleteMemo(@PathVariable Long propertyId,
-                             @PathVariable Long memoId) {
-
-        Memo memo = memoRepository.findById(memoId)
-                .orElseThrow(() -> new IllegalArgumentException("Memo not found: " + memoId));
-
-        if (memo.getProperty() == null || !memo.getProperty().getId().equals(propertyId)) {
-            throw new IllegalArgumentException("잘못된 요청입니다");
-        }
-
-        memoRepository.delete(memo);
-
+    public String deleteMemo(@PathVariable Long propertyId, @PathVariable Long memoId) {
+        propertyService.deleteMemo(propertyId, memoId);
         return "redirect:/properties/" + propertyId;
-
     }
-
 
     @GetMapping("/{id}/memos/new")
     public String newMemoForm(@PathVariable Long id, Model model) {
-        model.addAttribute("propertyId",id);
+        model.addAttribute("propertyId", id);
         return "MemoNew";
     }
 
-
-
-    // 5) 삭제
+    // 7) 매물 삭제
     @PostMapping("/{id}/delete")
     public String delete(@PathVariable Long id) {
-        propertyRepository.deleteById(id);
+        propertyService.delete(id);
         return "redirect:/properties";
     }
 
-    // 6) 수정
-
+    // 8) 수정 폼
     @GetMapping("/{id}/edit")
     public String editForm(@PathVariable Long id, Model model) {
-        Property property = propertyRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Property not found : " + id));
+        Property property = propertyService.findById(id);
 
-        model.addAttribute("property",property);
-
-        // ✅ Property -> DTO 변환 (폼에 값 채우기)
-        PropertyCreateRequest form = new PropertyCreateRequest();
-        form.setTitle(property.getTitle());
-        form.setRegion(property.getRegion());
-        form.setBuildingName(property.getBuildingName());
-        form.setAddress(property.getAddress());
-        form.setLotAddress(property.getLotAddress());
-        form.setUnitNumber(property.getUnitNumber());
-        form.setBuiltYear(property.getBuiltYear());
-        form.setArea(property.getArea());
-
-        form.setDealType(property.getDealType());
-        form.setDeposit(property.getDepositMan());          // ✅ 폼은 만원 단위
-        form.setMonthlyRent(property.getMonthlyRentMan());
-        form.setManagementFee(property.getManagementFeeMan());
-        form.setStatus(property.getStatus());
-        form.setExpiry(property.getExpiry());
-
-        form.setHasElevator(property.getHasElevator());
-        form.setHasParking(property.getHasParking());
-        form.setRoomCount(property.getRoomCount());
-        form.setPetAllowed(property.getPetAllowed());
-        form.setLhAvailable(property.getLhAvailable());
-
-        form.setEntrancePassword(property.getEntrancePassword());
-        form.setHousePassword(property.getHousePassword());
-        form.setTenantPhone(property.getTenantPhone());
-        form.setOwnerPhone(property.getOwnerPhone());
-
-
-
+        model.addAttribute("property", property);
+        model.addAttribute("form", PropertyCreateRequest.from(property));   // ← 정적 팩토리로 한 줄
         model.addAttribute("propertyId", id);
-        model.addAttribute("form", form);
         model.addAttribute("dealTypes", DealType.values());
         return "properties/edit";
     }
 
+    // 9) 수정 처리
     @PostMapping("/{id}")
     public String update(@PathVariable Long id,
                          @ModelAttribute("form") PropertyCreateRequest request,
-                         @RequestParam(value="photos", required=false) java.util.List<org.springframework.web.multipart.MultipartFile> photos,
+                         @RequestParam(value = "photos", required = false) List<MultipartFile> photos,
                          Model model) {
         try {
-            Property property = propertyRepository.findById(id)
-                    .orElseThrow(()-> new IllegalArgumentException("Property not found : " + id));
-
-            String newLot = request.getLotAddress();
-            String oldLot = property.getLotAddress();
-
-            if (newLot != null && !newLot.equals(oldLot)) {
-                var point = naverGeocodingClient.geocodeOrThrow(newLot);
-                property.updateLocation(point.lat(), point.lng());
-            }
-
-            // 나머지 값 갱신
-            property.updateAll(request);
-
-            propertyRepository.save(property);
-
-            if (photos != null) {
-                for(var file : photos) {
-                    if (file == null || file.isEmpty()) continue;
-
-                    var stored = fileStorageService.store(file);
-
-                    var photo = new PropertyPhoto(
-                            property,
-                            stored.originalName(),
-                            stored.storedName(),
-                            stored.url()
-
-                    );
-
-                    property.addPhoto(photo);
-                    propertyPhotoRepository.save(photo);
-                }
-            }
-
-
+            propertyService.update(id, request, photos);
             return "redirect:/properties/" + id;
-
         } catch (Exception e) {
-            e.printStackTrace();
-
-            Property property = propertyRepository.findById(id).orElse(null);
-
-            model.addAttribute("error", e.getMessage());
+            Property property = propertyService.findById(id);
             model.addAttribute("property", property);
-            model.addAttribute("form", request);
-            model.addAttribute("dealTypes", DealType.values());
             model.addAttribute("propertyId", id);
-
-
-
-            return "properties/edit";
-
+            return renderFormWithError("properties/edit", e, request, model);
         }
     }
 
-    // 사진 삭제 엔드포인트
+    // 10) 사진 삭제
     @PostMapping("/{propertyId}/photos/{photoId}/delete")
-    public String deletePhoto(@PathVariable Long propertyId,
-                              @PathVariable Long photoId) {
-
-        PropertyPhoto photo = propertyPhotoRepository.findById(photoId)
-                .orElseThrow(() -> new IllegalArgumentException("Photo not found : " + photoId));
-
-        // 다른 매물의 사진을 지우는 실수 방지
-        if (!photo.getProperty().getId().equals(propertyId)) {
-            throw new IllegalArgumentException("잘못된 요청입니다.");
-        }
-
-        // 1) DB 삭제
-        propertyPhotoRepository.delete(photo);
-
-         //2) ( 실제 파일도 삭제하고 싶으면 아래 추가
-         fileStorageService.deleteByUrl(photo.getUrl());
-
+    public String deletePhoto(@PathVariable Long propertyId, @PathVariable Long photoId) {
+        propertyService.deletePhoto(propertyId, photoId);
         return "redirect:/properties/" + propertyId + "/edit";
     }
 
+    // ============================================================
+    //   내부 헬퍼
+    // ============================================================
 
-
-
-
-
-
+    /**
+     * 폼 처리 중 예외가 발생했을 때 입력값을 유지하면서 폼을 다시 렌더한다.
+     * create / update 양쪽에서 공통으로 쓰는 패턴이라 추출했다.
+     */
+    private String renderFormWithError(String viewName, Exception e,
+                                       PropertyCreateRequest request, Model model) {
+        model.addAttribute("error", e.getMessage());
+        model.addAttribute("form", request);
+        model.addAttribute("dealTypes", DealType.values());
+        model.addAttribute("statuses", PropertyStatus.values());
+        return viewName;
+    }
 }

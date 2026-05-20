@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>로그인 · Property Manager</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <style>
+        .login-wrap { max-width: 420px; margin: 8vh auto; padding: 32px; }
+        .login-wrap h1 { margin-bottom: 8px; }
+        .login-wrap .muted { color: #888; margin-bottom: 24px; }
+        .alert { padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; }
+        .alert.error { background: #fee; color: #c33; border: 1px solid #fcc; }
+        .alert.info { background: #eef; color: #339; border: 1px solid #ccf; }
+        .field { margin-bottom: 16px; }
+        .field label { display: block; margin-bottom: 6px; font-weight: 600; }
+        .field input { width: 100%; padding: 10px 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; }
+        .btn.primary { width: 100%; padding: 12px; background: #2c7be5; color: #fff; border: 0; border-radius: 6px; cursor: pointer; font-size: 16px; }
+        .btn.primary:hover { background: #1a6fd8; }
+    </style>
+</head>
+<body>
+<div class="login-wrap">
+    <h1>로그인</h1>
+    <p class="muted">Property Manager에 접속하려면 로그인하세요.</p>
+
+    <div th:if="${param.error}" class="alert error">
+        아이디 또는 비밀번호가 올바르지 않습니다.
+    </div>
+    <div th:if="${param.logout}" class="alert info">
+        로그아웃되었습니다.
+    </div>
+
+    <form method="post" th:action="@{/login}">
+        <!--
+          Spring Security가 CSRF를 켠 상태에서, Thymeleaf는 form 안에
+          _csrf hidden input을 자동 주입한다. 별도 작성 불필요.
+        -->
+        <div class="field">
+            <label for="username">아이디</label>
+            <input id="username" type="text" name="username" required autofocus>
+        </div>
+        <div class="field">
+            <label for="password">비밀번호</label>
+            <input id="password" type="password" name="password" required>
+        </div>
+        <button type="submit" class="btn primary">로그인</button>
+    </form>
+</div>
+</body>
+</html>

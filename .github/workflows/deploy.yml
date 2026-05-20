@@ -58,6 +58,9 @@ jobs:
             set -a
             source /etc/environment
             set +a
+            
+            export APP_USERNAME='${{ secrets.APP_USERNAME }}'
+            export APP_PASSWORD='${{ secrets.APP_PASSWORD }}'
 
             nohup java \
               -jar /home/ubuntu/app/Property_manager-0.0.1-SNAPSHOT.jar \

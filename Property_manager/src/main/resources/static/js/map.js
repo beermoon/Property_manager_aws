@@ -153,7 +153,7 @@
             setHint('선택한 매물을 불러오는 중...');
 
             try {
-                const url = `/api/properties?id=${encodeURIComponent(focusId)}`;
+                const url = `/api/properties/markers?id=${encodeURIComponent(focusId)}`;
                 const res = await fetch(url);
                 const list = await res.json();
 
@@ -191,7 +191,7 @@
 
         try {
             const qs = buildQuery();
-            const res = await fetch(`/api/properties?${qs}`);
+            const res = await fetch(`/api/properties/markers?${qs}`);
             const list = await res.json();
 
             clearMarkers();
